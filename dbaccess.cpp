@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include "user_auth.h"
+#include "admin_auth.h"
 
 #ifdef _WIN32
     #include <conio.h>
@@ -107,18 +108,26 @@ int main() {
             }
         } else if (c == '\r' || c == '\n') { // Enter key
             choice = highlight;
-            break;
+        }
+
+        if(choice != -1 && choices[choice] == "Exit"){
+            return 0;
+        }
+
+        else if(choice != -1 && choices[choice] == "User"){
+            user_authentication();
+            choice = -1;
+        }
+
+        else if(choice != -1 && choices[choice] == "Admin"){
+            admin_authentication();
+            choice = -1;
         }
     }
 
-    cout << "You chose: " << choices[choice] << endl;
+    // cout << "You chose: " << choices[choice] << endl;
 
-    if(choices[choice] == "Exit"){
-        return 0;
-    }
 
-    if(choices[choice] == "User"){
-        user_authentication();
-    }
+
     return 0;
 }

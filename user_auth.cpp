@@ -1,6 +1,11 @@
 #include<iostream>
 #include<fstream>
 #include<string>
+#include <termios.h>
+#include <unistd.h>
+#include <cstdio>
+#include<ios>
+#include<limits>
 #include "user_auth.h"
 
 using namespace std;
@@ -30,11 +35,23 @@ int user_authentication(){
 
     string username = "", password= "";
 
+    cout << "Please enter your username and password for member login\n\n";
+
     cout << "Username: ";
     cin >> username;
 
     cout << "Password: ";
+
+    // used terminal structures so that password can be invisible while input 
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
     cin >> password;
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    
+    cout << "\n\n";
 
     string filepath = "auth_db/user_db.txt";
 
@@ -53,6 +70,10 @@ int user_authentication(){
             cout << "Wrong password\n";
         }
     }
+
+    sleep(3);
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     return 0;
 

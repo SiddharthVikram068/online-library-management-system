@@ -34,6 +34,7 @@ string admin_db_search(const string& filepath, const string& username) {
 int admin_authentication(){
 
     string username = "", password= "";
+    string printString = ""; // this string takes care if the server wants to print anything to the client
 
     cout << "Please enter your username and password for admin login\n\n";
 

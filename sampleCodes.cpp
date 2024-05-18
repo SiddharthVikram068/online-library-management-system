@@ -162,3 +162,159 @@
 // }
 
 
+
+
+//! client side of socket programming (string transfer)
+// #include <iostream>
+// #include <string>
+// #include <cstring>
+// #include <unistd.h>
+// #include <arpa/inet.h>
+
+// const char* SERVER_IP = "127.0.0.1";
+// const int SERVER_PORT = 8080;
+// const int BUFFER_SIZE = 1024;
+
+// int main() {
+//     int clientSocket;
+//     struct sockaddr_in serverAddr;
+//     char buffer[BUFFER_SIZE];
+
+//     // Create socket
+//     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+//     if (clientSocket == -1) {
+//         std::cerr << "Failed to create socket." << std::endl;
+//         return 1;
+//     }
+
+//     // Define server address
+//     serverAddr.sin_family = AF_INET;
+//     serverAddr.sin_port = htons(SERVER_PORT);
+//     if (inet_pton(AF_INET, SERVER_IP, &serverAddr.sin_addr) <= 0) {
+//         std::cerr << "Invalid address or address not supported." << std::endl;
+//         close(clientSocket);
+//         return 1;
+//     }
+
+//     // Connect to server
+//     if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+//         std::cerr << "Connection to server failed." << std::endl;
+//         close(clientSocket);
+//         return 1;
+//     }
+
+//     std::cout << "Connected to server at " << SERVER_IP << ":" << SERVER_PORT << std::endl;
+
+//     while (true) {
+//         std::cout << "Enter message: ";
+//         std::string message;
+//         std::getline(std::cin, message);
+
+//         if (message == "exit") {
+//             break;
+//         }
+
+//         send(clientSocket, message.c_str(), message.size(), 0);
+
+//         memset(buffer, 0, BUFFER_SIZE);
+//         int bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+//         if (bytesRead <= 0) {
+//             std::cerr << "Server disconnected or error occurred." << std::endl;
+//             break;
+//         }
+
+//         std::cout << "Server response: " << buffer << std::endl;
+//     }
+
+//     close(clientSocket);
+//     return 0;
+// }
+
+
+
+//! server side of socket programming(string transfer)
+// #include <iostream>
+// #include <string>
+// #include <thread>
+// #include <vector>
+// #include <cstring>
+// #include <unistd.h>
+// #include <arpa/inet.h>
+
+// const int PORT = 8080;
+// const int BUFFER_SIZE = 1024;
+
+
+// void handleClient(int clientSocket) {
+//     char buffer[BUFFER_SIZE];
+//     int bytesRead;
+
+//     while (true) {
+//         memset(buffer, 0, BUFFER_SIZE);
+//         bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+
+//         if (bytesRead <= 0) {
+//             std::cout << "Client disconnected or error occurred." << std::endl;
+//             break;
+//         }
+
+//         std::cout << "Received message: " << buffer << std::endl;
+
+//         std::string response = "Server received: " + std::string(buffer);
+//         send(clientSocket, response.c_str(), response.size(), 0);
+//     }
+
+//     close(clientSocket);
+// }
+
+
+// int main() {
+//     int serverSocket, clientSocket;
+//     struct sockaddr_in serverAddr, clientAddr;
+//     socklen_t clientAddrLen = sizeof(clientAddr);
+
+//     // Create socket
+//     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+//     if (serverSocket == -1) {
+//         std::cerr << "Failed to create socket." << std::endl;
+//         return 1;
+//     }
+
+//     // Bind socket to port
+//     serverAddr.sin_family = AF_INET;
+//     serverAddr.sin_addr.s_addr = INADDR_ANY;
+//     serverAddr.sin_port = htons(PORT);
+
+//     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+//         std::cerr << "Bind failed." << std::endl;
+//         close(serverSocket);
+//         return 1;
+//     }
+
+//     // Listen for incoming connections
+//     if (listen(serverSocket, 10) == -1) {
+//         std::cerr << "Listen failed." << std::endl;
+//         close(serverSocket);
+//         return 1;
+//     }
+
+//     std::cout << "Server listening on port " << PORT << std::endl;
+
+//     while (true) {
+//         // Accept a new connection
+//         clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
+//         if (clientSocket == -1) {
+//             std::cerr << "Failed to accept connection." << std::endl;
+//             continue;
+//         }
+
+//         std::cout << "Client connected." << std::endl;
+
+//         // Spawn a new thread to handle the client
+//         std::thread clientThread(handleClient, clientSocket);
+//         clientThread.detach();  // Detach the thread to allow it to run independently
+//     }
+
+//     close(serverSocket);
+//     return 0;
+// }

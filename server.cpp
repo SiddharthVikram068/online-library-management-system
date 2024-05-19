@@ -30,6 +30,7 @@ int accessMenu(int clientSocket){
     return number;
 }
 
+
 void handleClient(int clientSocket) {
 
     // let's make a state based protocol, a number will represent our state 
@@ -48,8 +49,23 @@ void handleClient(int clientSocket) {
             break;
         }
 
-        if(state != 2){
+        if(state == 3){
+            // cout << "entered access menu\n\n";
             state = accessMenu(clientSocket);
+        }
+
+        if(state == 1){
+            state = admin_authentication(clientSocket);
+        }
+
+        if(state == 0){
+            state = user_authentication(clientSocket);
+        }
+
+        // temporary code before implementing user and admin pages
+        if(state == 4 || state == 5){
+            cout << "things are working alright\n\n";
+            state = 3;
         }
 
         cout << "state of server is " << state << endl;

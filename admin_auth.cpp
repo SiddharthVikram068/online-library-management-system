@@ -5,8 +5,11 @@
 #include <unistd.h>
 #include <cstdio>
 #include<ios>
+#include<cstring>
 #include<limits>
 #include "admin_auth.h"
+#include <arpa/inet.h>
+#include<stdint.h>
 
 using namespace std;
 
@@ -31,29 +34,37 @@ string admin_db_search(const string& filepath, const string& username) {
     return ""; // Return empty string if no match is found
 }
 
-int admin_authentication(){
+int admin_authentication(int clientSocket){
 
-    string username = "", password= "";
+    char usernameBuf[1024];
+    char passwordBuf[1024];
+    memset(usernameBuf, 0, 1024);
+    memset(passwordBuf, 0, 1024);
+    int state = 1;
+
     string printString = ""; // this string takes care if the server wants to print anything to the client
 
-    cout << "Please enter your username and password for admin login\n\n";
 
-    cout << "Username: ";
-    cin >> username;
+    // taking username and password from the client from sockets 
+    int bytesRead = recv(clientSocket, usernameBuf, 1024, 0);
+    string username(usernameBuf, bytesRead);
+    cout << "Username recieved is " << username;
+    if(bytesRead <= 0){
+        cout << "error in authentication\n";
+        state = 3;
+        
+    }
 
-    cout << "Password: ";
+    bytesRead = recv(clientSocket, passwordBuf, 1024, 0);
+    string password(passwordBuf, bytesRead);
+    cout << "password recieved is " << password;
+    if(bytesRead <= 0){
+        cout << "error in authentication\n";
+        state = 3;
+    }
 
-    // used terminal structures so that password can be invisible while input
-    struct termios oldt, newt;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    cin >> password;
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
-    cout << "\n\n";
-
+    // database search for authentication 
     string filepath = "auth_db/admin_db.txt";
 
     string result = admin_db_search(filepath, username);
@@ -64,18 +75,23 @@ int admin_authentication(){
     else{
         if(password == result){
             cout << "Authentication successful\n";
+            state = 4;
 
         }
 
         else{
             cout << "Wrong password\n";
+            state = 3;
         }
     }
 
-    sleep(3);
+    uint32_t sendingState = htonl(state);
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    send(clientSocket, &sendingState, sizeof(sendingState), 0);
 
-    return 0;
+    // cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+
+    return state;
 
 }

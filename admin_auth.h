@@ -8,4 +8,4 @@
 using namespace std;
 
 string admin_db_search(const string& filepath, const string& username);
-int admin_authentication();
+int admin_authentication(int clientSocket);

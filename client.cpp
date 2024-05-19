@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 #include<termios.h>
 #include<vector>
+#include<ios>
+#include<limits>
 #include<stdint.h>
 
 const char* SERVER_IP = "127.0.0.1";
@@ -109,6 +111,82 @@ int accessMenuClient(int clientSocket){
     
 }
 
+int adminAuthClient(int clientSocket){
+    cout << "Welcome to administrator login portal\n\n";
+    string username = "", password="";
+    cout << "username: ";
+    cin >> username;
+
+    send(clientSocket, username.c_str(), username.length(), 0);
+
+    cout << "password: ";
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    cin >> password;
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+    send(clientSocket, password.c_str(), password.length(), 0);
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    uint32_t buffer; 
+    int bytesRead = recv(clientSocket, &buffer, sizeof(buffer), 0);
+
+    if(bytesRead <= 0){
+        cout << "Server and client communication broken";
+        return 3;
+    }
+    int state = ntohl(buffer);
+    if(state == 3){
+        cout << "Wrong password or no match found, going back to the access menu\n\n";
+    }
+
+    else if(state == 4){
+        cout << "Authentication Successful\n\n";
+    }
+    return state;
+}
+
+int userAuthClient(int clientSocket){
+    cout << "Welcome to User login portal\n\n";
+    string username = "", password="";
+    cout << "username: ";
+    cin >> username;
+
+    send(clientSocket, username.c_str(), username.length(), 0);
+
+    cout << "password: ";
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    cin >> password;
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+    send(clientSocket, password.c_str(), password.length(), 0);
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    uint32_t buffer; 
+    int bytesRead = recv(clientSocket, &buffer, sizeof(buffer), 0);
+
+    if(bytesRead <= 0){
+        cout << "Server and client communication broken";
+        return 3;
+    }
+    int state = ntohl(buffer);
+    if(state == 3){
+        cout << "Wrong password or no match found, going back to the access menu\n\n";
+    }
+
+    else if(state == 5){
+        cout << "Authentication Successful\n\n";
+    }
+    return state;
+}
+
 int main() {
     int clientSocket;
     struct sockaddr_in serverAddr;
@@ -156,8 +234,23 @@ int main() {
             break;
         }
 
-        if(clientState != 2){
+        if(clientState == 3){
             clientState = accessMenuClient(clientSocket);
+        }
+
+        if(clientState == 1){
+            clientState = adminAuthClient(clientSocket);
+        }
+
+        if(clientState == 0){
+            clientState = userAuthClient(clientSocket);
+        }
+        
+
+        // temporary code before implementing user and admin pages 
+        if(clientState == 4 || clientState == 5){
+            cout << "things are working okay\n\n";
+            clientState = 3;
         }
 
         cout << "clientState is " << clientState << endl;

@@ -7,6 +7,8 @@
 #include<ios>
 #include<limits>
 #include "user_auth.h"
+#include<cstring>
+#include<arpa/inet.h>
 
 using namespace std;
 
@@ -31,27 +33,52 @@ string user_db_search(const string& filepath, const string& username) {
     return ""; // Return empty string if no match is found
 }
 
-int user_authentication(){
+int user_authentication(int clientSocket){
 
-    string username = "", password= "";
+    char usernameBuf[1024];
+    char passwordBuf[1024];
+    memset(usernameBuf, 0, 1024);
+    memset(passwordBuf, 0, 1024);
+    int state = 0;
 
-    cout << "Please enter your username and password for member login\n\n";
+    string printString = ""; // if server wants to print anything to the client, this string can be used
 
-    cout << "Username: ";
-    cin >> username;
+    // string username = "", password= "";
+        // taking username and password from the client from sockets 
+    int bytesRead = recv(clientSocket, usernameBuf, 1024, 0);
+    string username(usernameBuf, bytesRead);
+    cout << "Username recieved is " << username;
+    if(bytesRead <= 0){
+        cout << "error in authentication\n";
+        state = 3;
+        
+    }
 
-    cout << "Password: ";
+    bytesRead = recv(clientSocket, passwordBuf, 1024, 0);
+    string password(passwordBuf, bytesRead);
+    cout << "password recieved is " << password;
+    if(bytesRead <= 0){
+        cout << "error in authentication\n";
+        state = 3;
+    }
 
-    // used terminal structures so that password can be invisible while input 
-    struct termios oldt, newt;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    cin >> password;
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    // cout << "Please enter your username and password for member login\n\n";
+
+    // cout << "Username: ";
+    // cin >> username;
+
+    // cout << "Password: ";
+
+    // // used terminal structures so that password can be invisible while input 
+    // struct termios oldt, newt;
+    // tcgetattr(STDIN_FILENO, &oldt);
+    // newt = oldt;
+    // newt.c_lflag &= ~(ECHO);
+    // tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    // cin >> password;
+    // tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     
-    cout << "\n\n";
+    // cout << "\n\n";
 
     string filepath = "auth_db/user_db.txt";
 
@@ -63,18 +90,23 @@ int user_authentication(){
     else{
         if(password == result){
             cout << "Authentication successful\n";
-
+            state = 5;
         }
 
         else{
             cout << "Wrong password\n";
+            state = 3;
         }
     }
 
-    sleep(3);
+    // sleep(3);
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    // cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    return 0;
+    uint32_t sendingState = htonl(state);
+
+    send(clientSocket, &sendingState, sizeof(sendingState), 0);
+
+    return state;
 
 }

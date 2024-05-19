@@ -9,6 +9,7 @@
 #include "admin_auth.h"
 #include "userHomepage.h"
 #include "adminHomepage.h"
+#include "actions.h"
 #include<stdint.h>
 
 const int PORT = 8080;
@@ -54,7 +55,6 @@ void handleClient(int clientSocket) {
         }
 
         if(state == 3){
-            // cout << "entered access menu\n\n";
             state = accessMenu(clientSocket);
             cout << "state of server is " << state << endl;
         }
@@ -63,7 +63,6 @@ void handleClient(int clientSocket) {
 
         if(state == 1){
             state = admin_authentication(clientSocket);
-            cout << adminPagename << "\n\n";
             cout << "state of server is " << state << endl;
         }
 
@@ -71,14 +70,12 @@ void handleClient(int clientSocket) {
 
         if(state == 0){
             state = user_authentication(clientSocket);
-            cout << userPagename << "\n\n";
             cout << "state of server is " << state << endl;
         }
 
         
 
         if(state == 5){
-            cout << "User Home page\n\n";
             state = userHomepageServer(clientSocket, userPagename);
             cout << "state of server is " << state << endl;
         }
@@ -86,7 +83,6 @@ void handleClient(int clientSocket) {
         
 
         if(state == 4){
-            cout << "Admin Home page\n\n";
             state = adminHomepageServer(clientSocket, adminPagename);
             cout << "state of server is " << state << endl;
         }

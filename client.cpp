@@ -8,6 +8,7 @@
 #include<ios>
 #include<limits>
 #include<stdint.h>
+#include<mutex>
 
 const char* SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 8080;
@@ -34,6 +35,7 @@ int getKeyPress() {
 }
 
 void printMenu(const vector<string>& choices, int highlight) {
+    cout << "\n\n";
     for (size_t i = 0; i < choices.size(); ++i) {
         if (i == highlight) {
             cout << "> " << choices[i] << " <" << endl;
@@ -44,6 +46,7 @@ void printMenu(const vector<string>& choices, int highlight) {
 }
 
 void printMenuHor(const vector<string>& choices, int highlight) {
+    cout << "\n\n";
     for (size_t i = 0; i < choices.size(); ++i) {
         cout << "\t\t\t";
         if (i == highlight) {
@@ -55,6 +58,7 @@ void printMenuHor(const vector<string>& choices, int highlight) {
 }
 
 void printMenuHor2(const vector<string>& choices, int highlight) {
+    cout << "\n\n";
     for (size_t i = 0; i < choices.size(); ++i) {
         cout << "\t";
         if (i == highlight) {
@@ -142,6 +146,7 @@ int accessMenuClient(int clientSocket){
 }
 
 int adminAuthClient(int clientSocket){
+    cout << "\n\n";
     cout << "Welcome to administrator login portal\n\n";
     string username = "", password="";
     cout << "username: ";
@@ -163,7 +168,7 @@ int adminAuthClient(int clientSocket){
 
     uint32_t buffer; 
     int bytesRead = recv(clientSocket, &buffer, sizeof(buffer), 0);
-
+    cout << "\n\n";
     if(bytesRead <= 0){
         cout << "Server and client communication broken";
         return 3;
@@ -180,6 +185,7 @@ int adminAuthClient(int clientSocket){
 }
 
 int userAuthClient(int clientSocket){
+    cout << "\n\n";
     cout << "Welcome to User login portal\n\n";
     string username = "", password="";
     cout << "username: ";
@@ -201,7 +207,7 @@ int userAuthClient(int clientSocket){
 
     uint32_t buffer; 
     int bytesRead = recv(clientSocket, &buffer, sizeof(buffer), 0);
-
+    cout << "\n\n";
     if(bytesRead <= 0){
         cout << "Server and client communication broken";
         return 3;
@@ -246,7 +252,8 @@ int adminHomepageClient(int clientSocket){
         "Logout",
         "Add Book",
         "Delete Book",
-        "Search book"
+        "Search book",
+        "Add user"
     };
 
     int highlight = 0;
@@ -311,15 +318,90 @@ int adminHomepageClient(int clientSocket){
 
     }
 
+    int actionClient = 9 + choice;
+    uint32_t sendingAction = htonl(actionClient);
 
     // actions based upon the option selected
     if(choice == 0){
+        send(clientSocket, &sendingAction, sizeof(sendingAction), 0);
         return 3;
     }
-    else{
-        return 3;
+    // add book
+    else if(choice == 1){
+        cout << "\n\n";
+        cout << "Name the book to add: ";
+        string bookToAdd; cin >> bookToAdd;
+        send(clientSocket, &sendingAction, sizeof(sendingAction), 0);
+        send(clientSocket, bookToAdd.c_str(), bookToAdd.length(), 0);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     }
 
+    else if(choice == 2){
+        cout << "\n\n";
+        cout << "Name the book to delete: ";
+        string bookToDelete; cin >> bookToDelete;
+        send(clientSocket, &sendingAction, sizeof(sendingAction), 0);
+        send(clientSocket, bookToDelete.c_str(), bookToDelete.length(), 0);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    else if(choice == 3){
+        cout << "\n\n";
+        cout << "Name the book to search: ";
+        string bookToSearch; cin >> bookToSearch;
+        send(clientSocket, &sendingAction, sizeof(sendingAction), 0);
+        send(clientSocket, bookToSearch.c_str(), bookToSearch.length(), 0);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        char bookInfo[1024];
+        uint32_t some_length;
+        recv(clientSocket, &some_length, sizeof(some_length), 0);
+        int infoLength = ntohl(some_length);
+        recv(clientSocket, bookInfo, infoLength, 0);
+        string book_info(bookInfo, infoLength);
+
+        cout << book_info << endl;
+        sleep(5);
+
+
+    }
+
+    // modify user
+    else if(choice == 4){
+        cout << "\n\n";
+
+        send(clientSocket, &sendingAction, sizeof(sendingAction), 0);
+
+        vector<string> modifyInfo(4, "");
+        cout << "Enter the name of the user you want to change: "; cin >> modifyInfo[0];
+        cout << "Enter the new username: "; cin >> modifyInfo[1];
+        cout << "Enter the new DOB: "; cin >> modifyInfo[2];
+        cout << "Enter new number of books borrowed: "; cin >> modifyInfo[3];
+
+        uint32_t sendingLength = htonl(modifyInfo[0].length());
+        send(clientSocket, &sendingLength, sizeof(sendingLength), 0);
+        send(clientSocket, modifyInfo[0].c_str(), modifyInfo[0].length(), 0);
+
+
+        sendingLength = htonl(modifyInfo[1].length());
+        send(clientSocket, &sendingLength, sizeof(sendingLength), 0);
+        send(clientSocket, modifyInfo[1].c_str(), modifyInfo[1].length(), 0);
+        
+        
+        sendingLength = htonl(modifyInfo[2].length());
+        send(clientSocket, &sendingLength, sizeof(sendingLength), 0);
+        send(clientSocket, modifyInfo[2].c_str(), modifyInfo[2].length(), 0);
+
+
+        sendingLength = htonl(modifyInfo[3].length());
+        send(clientSocket, &sendingLength, sizeof(sendingLength), 0);
+        send(clientSocket, modifyInfo[3].c_str(), modifyInfo[3].length(), 0);
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    return 4;
 
 }
 
@@ -362,6 +444,8 @@ int userHomepageClient(int clientSocket){
 
     while(true){
         clearScreen();
+
+        cout << "\n\n";
 
         // user info printing 
         for(int i = 0; i<3; i++){
@@ -508,8 +592,6 @@ int main() {
             clientState = adminHomepageClient(clientSocket);
             cout << "clientState is " << clientState << endl;
         }
-
-        // cout << "clientState is " << clientState << endl;
 
     }
 

@@ -9,9 +9,11 @@
 #include "user_auth.h"
 #include<cstring>
 #include<arpa/inet.h>
+#include<mutex>
 
 using namespace std;
 
+mutex user_auth;
 string userPagename;
 
 // linear search find
@@ -45,8 +47,7 @@ int user_authentication(int clientSocket){
 
     string printString = ""; // if server wants to print anything to the client, this string can be used
 
-    // string username = "", password= "";
-        // taking username and password from the client from sockets 
+    // taking username and password from the client from sockets 
     int bytesRead = recv(clientSocket, usernameBuf, 1024, 0);
     string username(usernameBuf, bytesRead);
     userPagename = username;
@@ -65,27 +66,12 @@ int user_authentication(int clientSocket){
         state = 3;
     }
 
-    // cout << "Please enter your username and password for member login\n\n";
-
-    // cout << "Username: ";
-    // cin >> username;
-
-    // cout << "Password: ";
-
-    // // used terminal structures so that password can be invisible while input 
-    // struct termios oldt, newt;
-    // tcgetattr(STDIN_FILENO, &oldt);
-    // newt = oldt;
-    // newt.c_lflag &= ~(ECHO);
-    // tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    // cin >> password;
-    // tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    
-    // cout << "\n\n";
 
     string filepath = "auth_db/user_db.txt";
 
+    user_auth.lock();
     string result = user_db_search(filepath, username);
+    user_auth.unlock();
 
     if(result.empty()){
         cout << "no match is found or an error occured\n";
@@ -101,10 +87,6 @@ int user_authentication(int clientSocket){
             state = 3;
         }
     }
-
-    // sleep(3);
-
-    // cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     uint32_t sendingState = htonl(state);
 

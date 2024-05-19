@@ -10,9 +10,11 @@
 #include "admin_auth.h"
 #include <arpa/inet.h>
 #include<stdint.h>
+#include<mutex>
 
 using namespace std;
 
+mutex admin_auth;
 string adminPagename;
 
 // linear search find
@@ -70,7 +72,9 @@ int admin_authentication(int clientSocket){
     // database search for authentication 
     string filepath = "auth_db/admin_db.txt";
 
+    admin_auth.lock();
     string result = admin_db_search(filepath, username);
+    admin_auth.unlock();
 
     if(result.empty()){
         cout << "no match is found or an error occured\n";
@@ -91,8 +95,6 @@ int admin_authentication(int clientSocket){
     uint32_t sendingState = htonl(state);
 
     send(clientSocket, &sendingState, sizeof(sendingState), 0);
-
-    // cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
 
     return state;

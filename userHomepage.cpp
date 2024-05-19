@@ -10,10 +10,12 @@
 #include<stdint.h>
 #include<fstream>
 #include<arpa/inet.h>
+#include<mutex>
 #include "userHomepage.h"
 
 using namespace std;
 
+mutex userPages;
 /*
 info[0] - name
 info[1] - DOB
@@ -46,8 +48,10 @@ vector<string> getInfo(const string& filepath, const string& userPagename){
 
 int userHomepageServer(int clientSocket, string userPagename){
     int state = 5;
+    userPages.lock();
     string filepath = "homepage_db/user_pages.txt";
     vector<string> userInfo = getInfo(filepath, userPagename);
+    userPages.unlock();
 
     /*
     since we are sending multiple strings, we have to establish a protocol,

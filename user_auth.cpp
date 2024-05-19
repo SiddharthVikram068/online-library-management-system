@@ -12,6 +12,8 @@
 
 using namespace std;
 
+string userPagename;
+
 // linear search find
 string user_db_search(const string& filepath, const string& username) {
     ifstream file(filepath);
@@ -47,6 +49,7 @@ int user_authentication(int clientSocket){
         // taking username and password from the client from sockets 
     int bytesRead = recv(clientSocket, usernameBuf, 1024, 0);
     string username(usernameBuf, bytesRead);
+    userPagename = username;
     cout << "Username recieved is " << username;
     if(bytesRead <= 0){
         cout << "error in authentication\n";

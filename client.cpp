@@ -43,6 +43,36 @@ void printMenu(const vector<string>& choices, int highlight) {
     }
 }
 
+void printMenuHor(const vector<string>& choices, int highlight) {
+    for (size_t i = 0; i < choices.size(); ++i) {
+        cout << "\t\t\t";
+        if (i == highlight) {
+            cout << "> " << choices[i] << " <";
+        } else {
+            cout << "  " << choices[i];
+        }
+    }
+}
+
+void printMenuHor2(const vector<string>& choices, int highlight) {
+    for (size_t i = 0; i < choices.size(); ++i) {
+        cout << "\t";
+        if (i == highlight) {
+            cout << "> " << choices[i] << " <";
+        } else {
+            cout << "  " << choices[i];
+        }
+    }
+}
+
+string convertToString(char* a, int size)
+{
+    string s(a, size);
+    return s;
+}
+
+
+
 int accessMenuClient(int clientSocket){
 
     vector<string> choices = {
@@ -187,6 +217,221 @@ int userAuthClient(int clientSocket){
     return state;
 }
 
+int adminHomepageClient(int clientSocket){
+
+
+    // recieving admin info from server
+    vector<string> info(2, "");
+    char nameBuf[1024];
+    char dobBuf[1024];
+
+    int length = 0;
+    uint32_t recieveLength;
+
+    recv(clientSocket, &recieveLength, sizeof(recieveLength), 0);
+    length = ntohl(recieveLength);
+    int bytesRead = recv(clientSocket, nameBuf, length, 0);
+    info[0] = convertToString(nameBuf, length);
+
+    cout << info[0] << endl;
+    
+    recv(clientSocket, &recieveLength, sizeof(recieveLength), 0);
+    length = ntohl(recieveLength);
+    bytesRead = recv(clientSocket, dobBuf, length, 0);
+    info[1] = convertToString(dobBuf, length);
+
+
+    // printing the menu and info 
+    vector<string> choices = {
+        "Logout",
+        "Add Book",
+        "Delete Book",
+        "Search book"
+    };
+
+    int highlight = 0;
+    int choice = -1;
+
+    while(true){
+        clearScreen();
+
+        // printing admin info
+        for(int i = 0; i<2; i++){
+            if(i == 0) cout << "Name: ";
+            else if(i == 1) cout << "DOB: ";
+
+            cout << info[i] << endl;
+        }
+        
+        cout << "\n\n";
+
+        printMenuHor2(choices, highlight);
+
+        int c = getKeyPress();
+
+        if (c == '\033') { // handle arrow keys on Unix-like systems
+            getKeyPress(); // skip the [
+            switch (getKeyPress()) {
+                case 'D': // left arrow
+                    if (highlight > 0) {
+                        --highlight;
+                    } else {
+                        highlight = choices.size() - 1;
+                    }
+                    break;
+                case 'C': // right arrow
+                    if (highlight < choices.size() - 1) {
+                        ++highlight;
+                    } else {
+                        highlight = 0;
+                    }
+                    break;
+            }
+        } else if (c == 224) { // handle arrow keys on Windows
+            switch (getKeyPress()) {
+                case 72: // Up arrow
+                    if (highlight > 0) {
+                        --highlight;
+                    } else {
+                        highlight = choices.size() - 1;
+                    }
+                    break;
+                case 80: // Down arrow
+                    if (highlight < choices.size() - 1) {
+                        ++highlight;
+                    } else {
+                        highlight = 0;
+                    }
+                    break;
+            }
+        } else if (c == '\r' || c == '\n') { // Enter key
+            choice = highlight;
+            break;
+        }
+
+    }
+
+
+    // actions based upon the option selected
+    if(choice == 0){
+        return 3;
+    }
+    else{
+        return 3;
+    }
+
+
+}
+
+int userHomepageClient(int clientSocket){
+
+    // recieving user info from server and displaying it 
+    vector<string> info(3, "");
+    char nameBuf[1024];
+    char dobBuf[1024];
+    char bbBuf[1024];
+
+    int length = 0;
+    uint32_t recieveLength;
+
+    recv(clientSocket, &recieveLength, sizeof(recieveLength), 0);
+    length = ntohl(recieveLength);
+    int bytesRead = recv(clientSocket, nameBuf, length, 0);
+    info[0] = convertToString(nameBuf, length);
+    
+    recv(clientSocket, &recieveLength, sizeof(recieveLength), 0);
+    length = ntohl(recieveLength);
+    bytesRead = recv(clientSocket, dobBuf, length, 0);
+    info[1] = convertToString(dobBuf, length);
+
+    recv(clientSocket, &recieveLength, sizeof(recieveLength), 0);
+    length = ntohl(recieveLength);
+    bytesRead = recv(clientSocket, bbBuf, length, 0);
+    info[2] = convertToString(bbBuf, length);
+    
+
+    // logout and search menu
+    vector<string> choices = {
+        "Logout",
+        "Search for a book"
+    };
+
+    int highlight = 0;
+    int choice = -1;
+
+
+    while(true){
+        clearScreen();
+
+        // user info printing 
+        for(int i = 0; i<3; i++){
+            if(i == 0) cout << "Name: ";
+            else if(i == 1) cout << "DOB: ";
+            else cout << "Number of Books Borrowed: ";
+
+            cout << info[i] << endl;
+        }
+        
+        cout << "\n\n";
+
+
+        // printing menu for choices 
+        printMenuHor(choices, highlight);
+
+        int c = getKeyPress();
+
+        if (c == '\033') { // handle arrow keys on Unix-like systems
+            getKeyPress(); // skip the [
+            switch (getKeyPress()) {
+                case 'D': // left arrow
+                    if (highlight > 0) {
+                        --highlight;
+                    } else {
+                        highlight = choices.size() - 1;
+                    }
+                    break;
+                case 'C': // right arrow
+                    if (highlight < choices.size() - 1) {
+                        ++highlight;
+                    } else {
+                        highlight = 0;
+                    }
+                    break;
+            }
+        } else if (c == 224) { // handle arrow keys on Windows
+            switch (getKeyPress()) {
+                case 72: // Up arrow
+                    if (highlight > 0) {
+                        --highlight;
+                    } else {
+                        highlight = choices.size() - 1;
+                    }
+                    break;
+                case 80: // Down arrow
+                    if (highlight < choices.size() - 1) {
+                        ++highlight;
+                    } else {
+                        highlight = 0;
+                    }
+                    break;
+            }
+        } else if (c == '\r' || c == '\n') { // Enter key
+            choice = highlight;
+            break;
+        }
+        // clearScreen();
+    }
+
+    // actions based upon logout or search
+    if(choice == 0){
+        return 3;
+    }
+    else{
+        // book database search
+        return 3;
+    }
+}
+
 int main() {
     int clientSocket;
     struct sockaddr_in serverAddr;
@@ -231,29 +476,40 @@ int main() {
     while(true){
         
         if(clientState == 2){
+            cout << "clientState is " << clientState << endl;
             break;
         }
 
         if(clientState == 3){
             clientState = accessMenuClient(clientSocket);
+            cout << "clientState is " << clientState << endl;
         }
 
         if(clientState == 1){
             clientState = adminAuthClient(clientSocket);
+            cout << "clientState is " << clientState << endl;
         }
 
         if(clientState == 0){
             clientState = userAuthClient(clientSocket);
+            cout << "clientState is " << clientState << endl;
+        }
+
+        if(clientState ==5){
+            cout << "user Home page\n\n";
+            clientState = userHomepageClient(clientSocket);
+            cout << "clientState is " << clientState << endl;
         }
         
 
         // temporary code before implementing user and admin pages 
-        if(clientState == 4 || clientState == 5){
-            cout << "things are working okay\n\n";
-            clientState = 3;
+        if(clientState == 4){
+            cout << "Admin Home page\n\n";
+            clientState = adminHomepageClient(clientSocket);
+            cout << "clientState is " << clientState << endl;
         }
 
-        cout << "clientState is " << clientState << endl;
+        // cout << "clientState is " << clientState << endl;
 
     }
 
